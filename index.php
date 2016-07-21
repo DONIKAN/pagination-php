@@ -1,5 +1,6 @@
 <?php 
 	require "includes/connect_db.php";
+	require 'includes/functions.php';
 
 	$req = $db->query('SELECT id FROM articles');
 
@@ -9,7 +10,7 @@
 
 	$nbre_pages_max_gauche_et_droite = 4;
 
-	$last_page = ceil($nbre_total_articles / $nbre_articles_par_page);
+	$nbre_pages = ceil($nbre_total_articles / $nbre_articles_par_page);
 
 	if(isset($_GET['page']) && is_numeric($_GET['page'])){
 		$page_num = $_GET['page'];
@@ -19,44 +20,14 @@
 
 	if($page_num < 1){
 		$page_num = 1;
-	} else if($page_num > $last_page) {
-		$page_num = $last_page;
+	} else if($page_num > $nbPages) {
+		$page_num = $nbPages;
 	}
 
 	$limit = 'LIMIT '.($page_num - 1) * $nbre_articles_par_page. ',' . $nbre_articles_par_page;
 
 	//Cette requête sera utilisée plus tard
 	$sql = "SELECT id, title, content, DATE_FORMAT(pub_date,'%d/%m/%Y à %Hh%imin%ss') as date FROM articles ORDER BY id DESC $limit";
-
-	$pagination = '';
-
-	if($last_page != 1){
-		if($page_num > 1){
-			$previous = $page_num - 1;
-			$pagination .= '<a href="index.php?page='.$previous.'">Précédent</a> &nbsp; &nbsp;';
-
-			for($i = $page_num - $nbre_pages_max_gauche_et_droite; $i < $page_num; $i++){
-				if($i > 0){
-					$pagination .= '<a href="index.php?page='.$i.'">'.$i.'</a> &nbsp;';
-				}
-			}
-		}
-
-		$pagination .= '<span class="active">'.$page_num.'</span>&nbsp;';
-
-		for($i = $page_num+1; $i <= $last_page; $i++){
-			$pagination .= '<a href="index.php?page='.$i.'">'.$i.'</a> ';
-			
-			if($i >= $page_num + $nbre_pages_max_gauche_et_droite){
-				break;
-			}
-		}
-
-		if($page_num != $last_page){
-			$next = $page_num + 1;
-			$pagination .= '<a href="index.php?page='.$next.'">Suivant</a> ';
-		}
-	}
 ?> 
 
 <!DOCTYPE html>
@@ -114,8 +85,10 @@
 			while($data = $req->fetch()){
 				echo '<div class="post"><b>'.$data['title'].'</b><br/>'.$data['content'].'<br/>Publié le '.$data['date'].'</div>';
 			}
-
-			echo '<div id="pagination">'.$pagination.'</div>';
+			
+        	if ($nbre_pages > 1 ){ 
+        		echo paginate('index.php','?page=',$nbre_pages,$page_num,$nbre_pages_max_gauche_et_droite); 
+        	}
 
 			$req->closeCursor();
 		?>
